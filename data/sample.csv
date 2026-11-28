@@ -1,5 +1,4 @@
-
-timestamp,ip,user,result
-2026-11-22 10:00:00,192.168.1.10,admin,FAILED
-2026-11-22 10:01:00,192.168.1.10,admin,FAILED
-2026-11-22 10:02:00,192.168.1.10,admin,SUCCESS
+timestamp,ip_address,username,result
+2026-11-22T10:00:00,192.0.2.1,alice,failure
+2026-11-22T10:01:00,192.0.2.1,alice,failure
+2026-11-22T10:02:00,192.0.2.1,alice,failure

@@ -1,24 +1,19 @@
-# security-log-analizer
 # Güvenlik Log Analizi ve Olay Takip Sistemi
-EBLG443 Tasarım Kalıpları Dönem Projesi
-## Amacım
-CSV ve JSON güvenlik kayıtlarını ortak formata dönüştürmek,şüpheli girişleri analiz etmek ve güvenlik olaylarını takip etmek.
-## Kullanılan Dil
-Python 3.10+
-## Tasarım Kalıpları
-- Adapter (ilk sürümde uygulandı)
-- Builder (planlandı)
-- Strategy (planlandı)
-- State (planlandı)
-## Kurulum
-python -m venv .venv
-python -m pip install pytest
+EBLG443 — Tasarım Kalıpları | v0.2
+
+CSV ve JSON giriş kayıtlarını ortak modele dönüştüren, şüpheli girişleri tespit eden ve olay durumlarını yöneten yerel Python prototipi.
+
 ## Çalıştırma
-python main.py
-## Test
-python -m pytest -v
-## İlk Sürüm
-Adapter kalıbıyla CSV ve JSON güvenlik kayıtlarının LogRecord modeline dönüştürülmesi.
-## Kaynaklar
-- EBLG443 ders müfredatı
-- Refactoring.Guru - Design Patterns
+Python 3.10+ ile proje kökünde `python main.py` komutunu çalıştırın. Olay yönetimi için `python main.py --interactive` kullanın.
+
+## Tasarım kalıpları
+| Kalıp | Dosya | Amaç |
+|---|---|---|
+| Adapter | log_reader.py | CSV/JSON uyarlama |
+| Builder | analysis_config.py | Analiz yapılandırması |
+| Strategy | detection.py | Değiştirilebilir tespit algoritmaları |
+| State | incident.py | İzinli durum geçişleri |
+
+[Kurulum](docs/INSTALL.md) · [Test](docs/TEST.md) · [UML ve kalıp haritası](docs/DESIGN.md)
+
+Sınırlar: Yerel prototip; olaylar bellekte tutulur, kalıcı veri tabanı ve gerçek zamanlı izleme yoktur. Örnek veriler sentetiktir. Tespitler kesin saldırı kanıtı değildir.

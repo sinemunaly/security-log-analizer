@@ -1,82 +1,56 @@
-
-import csv
-import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+import csv
+import json
 
-
-# Ortak güvenlik kaydı modeli
 @dataclass(frozen=True)
 class LogRecord:
-    timestamp: str
+    timestamp: datetime
     ip_address: str
     username: str
     result: str
 
-
-# ADAPTER PATTERN - Target
-# Bütün log okuyucularının ortak arayüzü
-class LogReader(ABC):
-
+class LogReader(ABC):  # Adapter: Target
     @abstractmethod
-    def read_logs(self, file_path: str) -> list[LogRecord]:
-        pass
+    def read_logs(self, file_path): ...
 
+class CSVFileReader:  # Adaptee
+    def read_csv(self, file_path):
+        with open(file_path, encoding='utf-8-sig', newline='') as f:
+            return list(csv.DictReader(f))
 
-# ADAPTER PATTERN - Adaptee
-# CSV dosyalarını okuyan sınıf
-class CSVFileReader:
+class JSONFileReader:  # Adaptee
+    def read_json(self, file_path):
+        with open(file_path, encoding='utf-8-sig') as f:
+            rows = json.load(f)
+        if not isinstance(rows, list):
+            raise ValueError('JSON must contain a list of records')
+        return rows
 
-    def read_csv(self, file_path: str) -> list[dict]:
-        with open(file_path, encoding="utf-8-sig", newline="") as file:
-            return list(csv.DictReader(file))
+def normalize(rows):
+    records = []
+    for i, row in enumerate(rows, 1):
+        try:
+            row = {k.strip().lower(): v for k, v in row.items()}
+            result = row['result'].strip().lower()
+            if result not in ('failure', 'success'):
+                raise ValueError('result must be failure or success')
+            timestamp = datetime.fromisoformat(row['timestamp'])
+            if timestamp.tzinfo is not None:
+                raise ValueError('Use local timestamps without timezone')
+            ip, user = row['ip_address'].strip(), row['username'].strip()
+            if not ip or not user:
+                raise ValueError('Empty IP or username')
+            records.append(LogRecord(timestamp, ip, user, result))
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
+            raise ValueError(f'Record {i}: invalid or missing field: {e}') from e
+    return records
 
+class CSVLogAdapter(LogReader):  # Concrete Adapter
+    def __init__(self): self.reader = CSVFileReader()
+    def read_logs(self, file_path): return normalize(self.reader.read_csv(file_path))
 
-# ADAPTER PATTERN - Adaptee
-# JSON dosyalarını okuyan sınıf
-class JSONFileReader:
-
-    def read_json(self, file_path: str) -> list[dict]:
-        with open(file_path, encoding="utf-8") as file:
-            data = json.load(file)
-
-        if not isinstance(data, list):
-            raise ValueError("JSON verisi bir liste olmalıdır.")
-
-        return data
-
-
-def normalize_record(row: dict) -> LogRecord:
-    print("GELEN VERI:", repr(row))
-    """Ham veriyi ortak güvenlik kaydı modeline dönüştürür."""
-    return LogRecord(
-        timestamp=row["timestamp"],
-        ip_address=row["ip"],
-        username=row["user"],
-        result=row["result"],
-    )
-
-
-# ADAPTER PATTERN - Adapter
-# CSV verilerini ortak arayüze dönüştürür
-class CSVLogAdapter(LogReader):
-
-    def __init__(self, reader: CSVFileReader):
-        self.reader = reader
-
-    def read_logs(self, file_path: str) -> list[LogRecord]:
-        rows = self.reader.read_csv(file_path)
-        print("CSV sütunları:", rows[0].keys())
-        return [normalize_record(row) for row in rows]
-
-
-# ADAPTER PATTERN - Adapter
-# JSON verilerini ortak arayüze dönüştürür
-class JSONLogAdapter(LogReader):
-
-    def __init__(self, reader: JSONFileReader):
-        self.reader = reader
-
-    def read_logs(self, file_path: str) -> list[LogRecord]:
-        rows = self.reader.read_json(file_path)
-        return [normalize_record(row) for row in rows]
+class JSONLogAdapter(LogReader):  # Concrete Adapter
+    def __init__(self): self.reader = JSONFileReader()
+    def read_logs(self, file_path): return normalize(self.reader.read_json(file_path))
